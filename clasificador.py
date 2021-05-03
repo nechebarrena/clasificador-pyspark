@@ -21,7 +21,7 @@ spark = SparkSession.builder \
     .appName("CLASIFICADOR") \
     .getOrCreate()
 #Create PySpark DataFrame from Pandas
-sparkDF=spark.createDataFrame(df_iris) 
+sparkDF=spark.createDataFrame(df_iris)
 sparkDF.printSchema()
 sparkDF.show()
 
@@ -30,27 +30,23 @@ from pyspark.ml import Pipeline
 from pyspark.ml.classification import RandomForestClassifier
 from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.ml.linalg import Vectors
+from pyspark.ml.feature import VectorAssembler
+
+# transformer
+print("NUEVO")
+vector_assembler = VectorAssembler(inputCols=["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],outputCol="features")
+sparkDF = vector_assembler.transform(sparkDF)
+sparkDF.show(10)
 
 (trainingData, testData) = sparkDF.randomSplit([0.7, 0.3])
 print("Training >>>")
-trainingData.show()
+trainingData.show(2)
 
 print("Test >>>")
-testData.show()
+testData.show(2)
 
-features_col = ['petal length (cm)','petal width (cm)']
-target_col = ['target']
+rf = RandomForestClassifier(labelCol='target', featuresCol="features", numTrees=10)
+model = rf.fit(trainingData)
 
-rf = RandomForestClassifier(labelCol='target', featuresCol=features_col, numTrees=10)
-rfModel = rf.fit(trainingData)
-
-
-trainingSummary = rfModel.summary
-roc = trainingSummary.roc.toPandas()
-plt.plot(roc['FPR'],roc['TPR'])
-plt.ylabel('False Positive Rate')
-plt.xlabel('True Positive Rate')
-plt.title('ROC Curve')
-plt.show()
-print('Training set areaUnderROC: ' + str(trainingSummary.areaUnderROC))
-
+# test our model and make predictions using testing data
