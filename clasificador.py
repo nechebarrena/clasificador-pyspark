@@ -50,3 +50,22 @@ rf = RandomForestClassifier(labelCol='target', featuresCol="features", numTrees=
 model = rf.fit(trainingData)
 
 # test our model and make predictions using testing data
+predictions = model.transform(testData)
+predictions.select("prediction","target", "features").show(5)
+
+evaluator = MulticlassClassificationEvaluator(labelCol="features", predictionCol="prediction",metricName="accuracy")
+
+
+y_true = predictions.select(['target']).collect()
+y_pred = predictions.select(['prediction']).collect()
+
+
+from sklearn.metrics import confusion_matrix
+cm = confusion_matrix(y_true, y_pred)
+
+print(cm)
+
+clases = ['0','1','2']
+from sklearn.metrics import precision_score, recall_score, classification_report
+reporte = classification_report(y_true, y_pred, target_names=clases)
+print(reporte)
